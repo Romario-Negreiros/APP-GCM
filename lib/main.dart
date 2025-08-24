@@ -7,6 +7,13 @@ import 'package:app_gcm_sa/views/login/login_view.dart';
 import 'package:app_gcm_sa/views/home/home_view.dart';
 import 'package:app_gcm_sa/views/cadastro/cadastro_view.dart';
 import 'package:app_gcm_sa/views/eventos/eventos_view.dart';
+import 'package:app_gcm_sa/views/cap/cap_view.dart';
+import 'package:app_gcm_sa/views/romaneio/romaneio_view.dart';
+import 'package:app_gcm_sa/views/normativa/normativa_view.dart';
+import 'package:app_gcm_sa/views/relatorios/relatorios_view.dart';
+import 'package:app_gcm_sa/views/bo_gcm_e/bo_gcm_e_view.dart';
+import 'package:app_gcm_sa/views/estatisticas/estatisticas_view.dart';
+import 'package:app_gcm_sa/views/hora_extra/hora_extra_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
@@ -21,6 +28,7 @@ Future<void> main() async {
 
   runApp(MyApp());
 }
+
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.child});
   final Widget child;
@@ -78,14 +86,51 @@ final _router = GoRouter(
           builder: (context, state) => HomeView(),
         ),
         GoRoute(
-          path: '/cadastro',
-          name: 'cadastro',
-          builder: (context, state) => CadastroView(),
+          path: '/hora-extra',
+          name: 'hora-extra',
+          builder: (context, state) => const HoraExtraView(),
+          routes: [
+            GoRoute(
+              path: 'cadastro',
+              name: 'cadastro',
+              builder: (context, state) => CadastroView(),
+            ),
+            GoRoute(
+              path: 'eventos',
+              name: 'eventos',
+              builder: (context, state) => EventosView(),
+            ),
+          ],
         ),
         GoRoute(
-          path: '/eventos',
-          name: 'eventos',
-          builder: (context, state) => EventosView(),
+          path: '/cap',
+          name: 'cap',
+          builder: (context, state) => const CapView(),
+        ),
+        GoRoute(
+          path: '/romaneio',
+          name: 'romaneio',
+          builder: (context, state) => const RomaneioView(),
+        ),
+        GoRoute(
+          path: '/normativa',
+          name: 'normativa',
+          builder: (context, state) => const NormativaView(),
+        ),
+        GoRoute(
+          path: '/relatorios',
+          name: 'relatorios',
+          builder: (context, state) => const RelatoriosView(),
+        ),
+        GoRoute(
+          path: '/bo-gcm-e',
+          name: 'bo-gcm-e',
+          builder: (context, state) => const BoGcmEView(),
+        ),
+        GoRoute(
+          path: '/estatistica',
+          name: 'estatistica',
+          builder: (context, state) => const EstatisticasView(),
         ),
       ],
     ),

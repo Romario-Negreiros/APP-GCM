@@ -946,6 +946,8 @@ class _CadastroViewState extends State<CadastroView> {
                                 ),
                               ),
                             ),
+
+                            const SizedBox(height: 32),
                           ],
                         ),
                       ),

@@ -16,14 +16,35 @@ class MenuItem {
 
 List<MenuItem> menus = [
   MenuItem(
-    text: "Cadastro",
-    link: "/cadastro",
-    iconSvg: "assets/svgIcons/user-round.svg",
+    text: "Hora Extra",
+    link: "/hora-extra",
+    iconSvg: "assets/svgIcons/lucide--calendar-days.svg",
+  ),
+  MenuItem(text: "CAP", link: "/cap", iconSvg: "assets/svgIcons/award.svg"),
+  MenuItem(
+    text: "Romaneio",
+    link: "/romaneio",
+    iconSvg: "assets/svgIcons/shirt.svg",
   ),
   MenuItem(
-    text: "Eventos",
-    link: "/eventos",
-    iconSvg: "assets/svgIcons/lucide--calendar-days.svg",
+    text: "Normativa",
+    link: "/normativa",
+    iconSvg: "assets/svgIcons/gavel.svg",
+  ),
+  MenuItem(
+    text: "Relatórios",
+    link: "/relatorios",
+    iconSvg: "assets/svgIcons/file-text.svg",
+  ),
+  MenuItem(
+    text: "BoGcm-E",
+    link: "/bo-gcm-e",
+    iconSvg: "assets/svgIcons/siren.svg",
+  ),
+  MenuItem(
+    text: "Estatística",
+    link: "/estatistica",
+    iconSvg: "assets/svgIcons/chart-bar.svg",
   ),
 ];
 

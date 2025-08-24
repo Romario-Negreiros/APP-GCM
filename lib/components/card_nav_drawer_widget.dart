@@ -137,25 +137,85 @@ class _NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
         ),
       },
       {
-        'name': 'Cadastro',
+        'name': 'Hora Extra',
         'item': buildMenuItem(
-          text: 'Cadastro',
-          iconSvg: 'assets/svgIcons/user-round.svg',
+          text: 'Hora Extra',
+          iconSvg: 'assets/svgIcons/lucide--calendar-days.svg',
           onClicked: () {
             Navigator.of(context).pop();
-            context.push("/cadastro");
+            context.push("/hora-extra");
           },
           isParent: false,
         ),
       },
       {
-        'name': 'Eventos',
+        'name': 'CAP',
         'item': buildMenuItem(
-          text: 'Eventos',
-          iconSvg: 'assets/svgIcons/lucide--calendar-days.svg',
+          text: 'CAP',
+          iconSvg: 'assets/svgIcons/award.svg',
           onClicked: () {
             Navigator.of(context).pop();
-            context.push("/eventos");
+            context.push("/cap");
+          },
+          isParent: false,
+        ),
+      },
+      {
+        'name': 'Romaneio',
+        'item': buildMenuItem(
+          text: 'Romaneio',
+          iconSvg: 'assets/svgIcons/shirt.svg',
+          onClicked: () {
+            Navigator.of(context).pop();
+            context.push("/romaneio");
+          },
+          isParent: false,
+        ),
+      },
+      {
+        'name': 'Normativa',
+        'item': buildMenuItem(
+          text: 'Normativa',
+          iconSvg: 'assets/svgIcons/gavel.svg',
+          onClicked: () {
+            Navigator.of(context).pop();
+            context.push("/normativa");
+          },
+          isParent: false,
+        ),
+      },
+      {
+        'name': 'Relatórios',
+        'item': buildMenuItem(
+          text: 'Relatórios',
+          iconSvg: 'assets/svgIcons/file-text.svg',
+          onClicked: () {
+            Navigator.of(context).pop();
+            context.push("/relatorios");
+          },
+          isParent: false,
+        ),
+      },
+      {
+        'name': 'BoGcm-E',
+        'item': buildMenuItem(
+          text: 'BoGcm-E',
+          iconSvg: 'assets/svgIcons/siren.svg',
+          onClicked: () {
+            Navigator.of(context).pop();
+            context.push("/bo-gcm-e");
+          },
+          isParent: false,
+        ),
+      },
+      {
+        'name': 'Estatística',
+        'item': buildMenuItem(
+          text: 'Estatística',
+          iconSvg: 'assets/svgIcons/chart-bar.svg',
+          onClicked: () {
+            Navigator.of(context).pop();
+            context.push("/estatistica");
           },
           isParent: false,
         ),
