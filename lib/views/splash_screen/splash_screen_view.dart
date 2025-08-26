@@ -107,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      'APP DA GCM-SA',
+                      'GCM-SA CONECTA',
                       textAlign: TextAlign.center,
                       style: Utils.safeGoogleFont(
                         'Nunito',

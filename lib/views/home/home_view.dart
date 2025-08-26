@@ -3,6 +3,7 @@ import 'package:app_gcm_sa/components/card_nav_drawer_widget.dart';
 import 'package:app_gcm_sa/services/session_manager.dart';
 import 'package:app_gcm_sa/utils/configuracoes.dart';
 import 'package:app_gcm_sa/utils/estilos.dart';
+import 'package:app_gcm_sa/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -134,9 +135,30 @@ class _HomeViewState extends State<HomeView> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 145 * ffem,
-                    child: Image.asset('assets/imagens/GCM-Logo.png'),
+                  Column(
+                    children: [
+                      SizedBox(
+                        height: 145 * ffem,
+                        child: Image.asset('assets/imagens/GCM-Logo.png'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Center(
+                          child: Text(
+                            'GCM-SA CONECTA',
+                            textAlign: TextAlign.center,
+                            style: Utils.safeGoogleFont(
+                              'Nunito',
+                              color: Colors.black,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              height: 0,
+                              letterSpacing: 0.88,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
