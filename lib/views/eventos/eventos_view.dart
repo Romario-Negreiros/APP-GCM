@@ -10,6 +10,7 @@ class Event {
   final String data;
   final String titulo;
   String leuNotificacaoEvento;
+  final String funcaoVoluntario;
 
   final String ordemDeServico;
   final String rua;
@@ -26,6 +27,7 @@ class Event {
     required this.data,
     required this.titulo,
     required this.leuNotificacaoEvento,
+    required this.funcaoVoluntario,
     required this.ordemDeServico,
     required this.rua,
     required this.numero,
@@ -43,6 +45,7 @@ class Event {
       data: json['data'] ?? '',
       titulo: json['dsc_titulo'] ?? 'Evento sem título',
       leuNotificacaoEvento: json['ind_leu_notificacao'] ?? 'N',
+      funcaoVoluntario: json['funcao_voluntario'] ?? 'Não atribuída',
 
       ordemDeServico: json['dsc_ordem_servico'] ?? 'Não informada',
       rua: json['dsc_rua'] ?? 'Não informada',
@@ -163,6 +166,11 @@ class _EventosViewState extends State<EventosView> {
                   'Inspetoria',
                   event.inspetoria,
                 ),
+                _buildDetailRow(
+                  Icons.person,
+                  'Função',
+                  event.funcaoVoluntario,
+                ),
               ],
             ),
           ),
@@ -226,7 +234,8 @@ class _EventosViewState extends State<EventosView> {
                           color: Estilos.azulClaro,
                         ),
                       )
-                      : events.isNotEmpty ? ListView.builder(
+                      : events.isNotEmpty
+                      ? ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         itemCount: events.length,
                         itemBuilder: (context, index) {
@@ -269,9 +278,8 @@ class _EventosViewState extends State<EventosView> {
                             ),
                           );
                         },
-                      ) : const Center(
-                        child: Text('Nenhum evento encontrado'),
-                      ),
+                      )
+                      : const Center(child: Text('Nenhum evento encontrado')),
             ),
           ),
         ),
