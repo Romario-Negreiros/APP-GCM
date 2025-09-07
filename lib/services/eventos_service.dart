@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:app_gcm_sa/utils/configuracoes.dart';
-import 'package:app_gcm_sa/views/eventos/eventos_view.dart';
+import 'package:app_gcm_sa/views/hora_extra/eventos/eventos_view.dart';
 import 'package:http/http.dart' as http;
 
 class EventosService {

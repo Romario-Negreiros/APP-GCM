@@ -1,8 +1,8 @@
 import 'package:app_gcm_sa/components/card_nav_drawer_widget.dart';
 import 'package:app_gcm_sa/utils/estilos.dart';
-import 'package:app_gcm_sa/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 
 class RelatoriosView extends StatelessWidget {
   const RelatoriosView({super.key});
@@ -13,86 +13,55 @@ class RelatoriosView extends StatelessWidget {
       appBar: Estilos.appbar(context, 'Relatórios'),
       drawer: const NavigationDrawerWidget(),
       backgroundColor: Estilos.branco,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Estilos.azulClaro.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: SvgPicture.asset(
-                  'assets/svgIcons/file-text.svg',
-                  colorFilter: Estilos.colorFilterIconsInicial,
-                  width: 40,
-                  height: 40,
-                ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          Card(
+            elevation: 2,
+            child: ListTile(
+              leading: SvgPicture.asset(
+                'assets/svgIcons/plus.svg', // Ícone para "adicionar"
+                colorFilter: Estilos.colorFilterIconsInicial,
+                width: 25,
+                height: 25,
               ),
-              const SizedBox(height: 24),
-
-              Text(
-                'Relatórios',
-                textAlign: TextAlign.center,
-                style: Utils.safeGoogleFont(
-                  'Roboto',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Estilos.preto,
-                ),
+              title: const Text(
+                'Inserir Novo Relatório',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
-
-              Chip(
-                label: const Text(
-                  'Em Desenvolvimento',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                backgroundColor: Estilos.warning,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              const SizedBox(height: 24),
-
-              Text(
-                'Este módulo permitirá a comunicação interna por meio de relatórios eletrônicos, facilitando solicitações, registros e avisos de forma centralizada.',
-                textAlign: TextAlign.center,
-                style: Utils.safeGoogleFont(
-                  'Roboto',
-                  fontSize: 16,
-                  color: Colors.black54,
-                  height: 1.5,
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              const Divider(),
-
-              const SizedBox(height: 32),
-
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.hourglass_top, color: Colors.grey),
-                  SizedBox(width: 8),
-                  Text(
-                    'Funcionalidades disponíveis em breve.',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              subtitle: const Text('Preencha e envie um novo relatório interno.'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                // Navega para a rota filha de inserção
+                context.push('/relatorios/cadastro');
+              },
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Card(
+            elevation: 2,
+            child: ListTile(
+              leading: SvgPicture.asset(
+                'assets/svgIcons/list.svg', // Ícone para "listar"
+                colorFilter: Estilos.colorFilterIconsInicial,
+                width: 25,
+                height: 25,
+              ),
+              title: const Text(
+                'Meus Relatórios Enviados',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text(
+                'Visualize o histórico dos seus relatórios.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                // Navega para a rota filha de listagem
+                context.push('/relatorios/listar');
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

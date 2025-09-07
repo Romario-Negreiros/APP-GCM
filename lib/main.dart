@@ -5,12 +5,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_gcm_sa/views/login/login_view.dart';
 import 'package:app_gcm_sa/views/home/home_view.dart';
-import 'package:app_gcm_sa/views/cadastro/cadastro_view.dart';
-import 'package:app_gcm_sa/views/eventos/eventos_view.dart';
+import 'package:app_gcm_sa/views/hora_extra/cadastro/cadastro_view.dart';
+import 'package:app_gcm_sa/views/hora_extra/eventos/eventos_view.dart';
 import 'package:app_gcm_sa/views/cap/cap_view.dart';
 import 'package:app_gcm_sa/views/romaneio/romaneio_view.dart';
 import 'package:app_gcm_sa/views/normativa/normativa_view.dart';
 import 'package:app_gcm_sa/views/relatorios/relatorios_view.dart';
+import 'package:app_gcm_sa/views/relatorios/cadastro/cadastro_requerimento_view.dart';
 import 'package:app_gcm_sa/views/bo_gcm_e/bo_gcm_e_view.dart';
 import 'package:app_gcm_sa/views/estatisticas/estatisticas_view.dart';
 import 'package:app_gcm_sa/views/hora_extra/hora_extra_view.dart';
@@ -92,12 +93,12 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: 'cadastro',
-              name: 'cadastro',
+              name: 'he-cadastro',
               builder: (context, state) => CadastroView(),
             ),
             GoRoute(
               path: 'eventos',
-              name: 'eventos',
+              name: 'he-eventos',
               builder: (context, state) => EventosView(),
             ),
           ],
@@ -121,6 +122,18 @@ final _router = GoRouter(
           path: '/relatorios',
           name: 'relatorios',
           builder: (context, state) => const RelatoriosView(),
+          routes: [
+            GoRoute(
+              path: 'cadastro',
+              name: 'rel-cadastro',
+              builder: (context, state) => CadastroRequerimentoView(),
+            ),
+            GoRoute(
+              path: 'listar',
+              name: 'rel-listar',
+              builder: (context, state) => EventosView(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/bo-gcm-e',
