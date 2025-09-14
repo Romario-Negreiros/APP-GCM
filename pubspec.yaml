@@ -81,7 +81,7 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/imagens/APPIcon.png"
+  image_path: "assets/imagens/APPIcon-V2.png"
   remove_alpha_ios: true
 
 flutter_native_splash:

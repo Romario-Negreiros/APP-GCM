@@ -94,6 +94,7 @@ class BtnPadraoSquare extends StatelessWidget {
                         fontSize: 14,
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w700,
+                        overflow: TextOverflow.ellipsis,
                         letterSpacing:
                             0.56, // Use Estilos.preto, se estiver definido em outro lugar.
                       ),

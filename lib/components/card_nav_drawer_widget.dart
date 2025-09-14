@@ -185,13 +185,13 @@ class _NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
         ),
       },
       {
-        'name': 'Relatórios',
+        'name': 'Requerimentos',
         'item': buildMenuItem(
-          text: 'Relatórios',
+          text: 'Requerimentos',
           iconSvg: 'assets/svgIcons/file-text.svg',
           onClicked: () {
             Navigator.of(context).pop();
-            context.push("/relatorios");
+            context.push("/requerimentos");
           },
           isParent: false,
         ),

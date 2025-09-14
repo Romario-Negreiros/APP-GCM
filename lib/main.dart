@@ -1,3 +1,4 @@
+import 'package:app_gcm_sa/views/requerimento/listar/listar_requerimentos_view.dart';
 import 'package:app_gcm_sa/views/splash_screen/splash_screen_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,8 +11,9 @@ import 'package:app_gcm_sa/views/hora_extra/eventos/eventos_view.dart';
 import 'package:app_gcm_sa/views/cap/cap_view.dart';
 import 'package:app_gcm_sa/views/romaneio/romaneio_view.dart';
 import 'package:app_gcm_sa/views/normativa/normativa_view.dart';
-import 'package:app_gcm_sa/views/relatorios/relatorios_view.dart';
-import 'package:app_gcm_sa/views/relatorios/cadastro/cadastro_requerimento_view.dart';
+import 'package:app_gcm_sa/views/requerimento/requerimentos_view.dart';
+import 'package:app_gcm_sa/views/requerimento/cadastro/cadastro_requerimento_view.dart';
+import 'package:app_gcm_sa/views/requerimento/cadastro/assinatura_requerimento_view.dart';
 import 'package:app_gcm_sa/views/bo_gcm_e/bo_gcm_e_view.dart';
 import 'package:app_gcm_sa/views/estatisticas/estatisticas_view.dart';
 import 'package:app_gcm_sa/views/hora_extra/hora_extra_view.dart';
@@ -119,9 +121,9 @@ final _router = GoRouter(
           builder: (context, state) => const NormativaView(),
         ),
         GoRoute(
-          path: '/relatorios',
-          name: 'relatorios',
-          builder: (context, state) => const RelatoriosView(),
+          path: '/requerimentos',
+          name: 'requerimentos',
+          builder: (context, state) => const RequerimentosView(),
           routes: [
             GoRoute(
               path: 'cadastro',
@@ -131,7 +133,12 @@ final _router = GoRouter(
             GoRoute(
               path: 'listar',
               name: 'rel-listar',
-              builder: (context, state) => EventosView(),
+              builder: (context, state) => ListarRequerimentosView(),
+            ),
+            GoRoute(
+              path: 'assinatura',
+              name: 'rel-assinatura',
+              builder: (context, state) => AssinaturaView(),
             ),
           ],
         ),

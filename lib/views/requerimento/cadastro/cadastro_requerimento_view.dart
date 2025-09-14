@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:app_gcm_sa/components/card_nav_drawer_widget.dart';
 import 'package:app_gcm_sa/components/snackbar_widget.dart';
 import 'package:app_gcm_sa/services/cadastro_service.dart';
@@ -7,35 +9,41 @@ import 'package:app_gcm_sa/utils/estilos.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class InserirRequerimentoView extends StatefulWidget {
-  const InserirRequerimentoView({super.key});
+class CadastroRequerimentoView extends StatefulWidget {
+  const CadastroRequerimentoView({super.key});
 
   @override
-  State<InserirRequerimentoView> createState() => _InserirRequerimentoViewState();
+  State<CadastroRequerimentoView> createState() => _CadastroRequerimentoViewState();
 }
 
-class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
+class _CadastroRequerimentoViewState extends State<CadastroRequerimentoView> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoadingPage = true; // Controla o loading inicial da página
+  bool _isLoadingPage = true;
   bool _isSending = false;
-  bool _assinaturaRealizada = false;
+  
+  // Armazena os bytes da imagem da assinatura
+  Uint8List? _assinaturaBytes;
+  bool get _assinaturaRealizada => _assinaturaBytes != null;
 
   // Serviços
   final SessionManager _sessionManager = SessionManager();
   final CadastroService _cadastroService = CadastroService();
   final RequerimentoService _requerimentoService = RequerimentoService();
 
-  // Dados do funcionário que não aparecem no formulário mas são necessários para o envio
+  // Dados do funcionário que não aparecem no formulário
   Map<String, dynamic> _dadosFuncionario = {};
 
-  // Mock de dados para os dropdowns (pode ser substituído por uma chamada de API no futuro)
-  final List<String> _postosDeServico = ['Paço Municipal', 'UPAs', 'Parques', 'Bases Comunitárias'];
-  String? _postoSelecionado;
-
-  // Controllers do formulário
+  // --- CONTROLLERS E VARIÁVEIS DE ESTADO ATUALIZADOS ---
+  // Controllers para os campos de texto
+  final _postoDeServicoController = TextEditingController();
+  final _inspetoriaController = TextEditingController();
   final _destinatarioController = TextEditingController();
-  final _assuntoController = TextEditingController();
   final _relatorioController = TextEditingController();
+
+  // Opções e valor selecionado para o dropdown de Assunto
+  final List<String> _opcoesAssunto = ['Férias', 'Licença', 'Abono', 'Mudança de escala', 'Outro'];
+  String? _assuntoSelecionado;
+
 
   @override
   void initState() {
@@ -45,8 +53,9 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
 
   @override
   void dispose() {
+    _postoDeServicoController.dispose();
+    _inspetoriaController.dispose();
     _destinatarioController.dispose();
-    _assuntoController.dispose();
     _relatorioController.dispose();
     super.dispose();
   }
@@ -63,14 +72,12 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
 
       final apiData = await _cadastroService.getCadastro(codFuncionario, token);
       
-      // Armazena os dados relevantes para o payload
       _dadosFuncionario = {
         "cod_funcionario": int.tryParse(codFuncionario) ?? 0,
         "dsc_nome": apiData['nome_completo'],
         "dsc_graduacao": apiData['graduacao'],
         "num_if": int.tryParse(apiData['identificacao_funcional']) ?? 0,
         "cod_turno": apiData['cod_turno'] ?? 0,
-        "dsc_inspetoria": "Não informado", // Este campo não vem da API de cadastro
       };
 
     } catch (e) {
@@ -99,16 +106,17 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
       final token = await _sessionManager.getToken();
       if(token == null) throw Exception("Sessão expirada.");
 
-      // Monta o payload final combinando os dados pré-carregados com os do formulário
       final Map<String, dynamic> payload = {
         ..._dadosFuncionario,
-        "dsc_posto_servico": _postoSelecionado!,
+        "dsc_posto_servico": _postoDeServicoController.text,
+        "dsc_inspetoria": _inspetoriaController.text,
         "dsc_destinatario": _destinatarioController.text,
-        "dsc_assunto": _assuntoController.text,
+        "dsc_assunto": _assuntoSelecionado!,
         "dsc_relatorio": _relatorioController.text,
+        // A assinatura será adicionada aqui no futuro
       };
 
-      await _requerimentoService.enviarRequerimento(payload, token);
+      await _requerimentoService.inserirRequerimento(payload, token);
       
       if (mounted) {
         showCustomSnackbar(context, message: 'Requerimento enviado com sucesso!');
@@ -140,13 +148,18 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Dropdown para Posto de Serviço
-                    DropdownButtonFormField<String>(
-                      value: _postoSelecionado,
+                    // --- FORMULÁRIO ATUALIZADO ---
+                    TextFormField(
+                      controller: _postoDeServicoController,
                       decoration: const InputDecoration(labelText: 'Posto de Serviço', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)))),
-                      items: _postosDeServico.map((String posto) => DropdownMenuItem<String>(value: posto, child: Text(posto))).toList(),
-                      onChanged: (String? newValue) => setState(() => _postoSelecionado = newValue),
-                      validator: (value) => value == null ? 'Selecione o posto de serviço' : null,
+                      validator: (value) => (value == null || value.isEmpty) ? 'Digite o posto de serviço' : null,
+                    ),
+                    const SizedBox(height: 24),
+
+                    TextFormField(
+                      controller: _inspetoriaController,
+                      decoration: const InputDecoration(labelText: 'Inspetoria', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)))),
+                      validator: (value) => (value == null || value.isEmpty) ? 'Digite a inspetoria' : null,
                     ),
                     const SizedBox(height: 24),
 
@@ -157,10 +170,12 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
                     ),
                     const SizedBox(height: 24),
 
-                    TextFormField(
-                      controller: _assuntoController,
+                    DropdownButtonFormField<String>(
+                      value: _assuntoSelecionado,
                       decoration: const InputDecoration(labelText: 'Assunto', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)))),
-                      validator: (value) => (value == null || value.isEmpty) ? 'Digite o assunto' : null,
+                      items: _opcoesAssunto.map((String assunto) => DropdownMenuItem<String>(value: assunto, child: Text(assunto))).toList(),
+                      onChanged: (String? newValue) => setState(() => _assuntoSelecionado = newValue),
+                      validator: (value) => value == null ? 'Selecione o assunto' : null,
                     ),
                     const SizedBox(height: 24),
 
@@ -172,7 +187,6 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Botão de Assinatura
                     OutlinedButton.icon(
                       icon: Icon(
                         _assinaturaRealizada ? Icons.check_circle : Icons.edit,
@@ -188,17 +202,16 @@ class _InserirRequerimentoViewState extends State<InserirRequerimentoView> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       onPressed: () async {
-                        final resultado = await context.push<bool>('/requerimento/assinatura');
-                        if (resultado == true) {
+                        final resultado = await context.push<Uint8List>('/requerimentos/assinatura');
+                        if (resultado != null) {
                           setState(() {
-                            _assinaturaRealizada = true;
+                            _assinaturaBytes = resultado;
                           });
                         }
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // Botão Enviar
                     SizedBox(
                       height: 52,
                       child: ElevatedButton(

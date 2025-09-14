@@ -33,8 +33,8 @@ List<MenuItem> menus = [
     iconSvg: "assets/svgIcons/gavel.svg",
   ),
   MenuItem(
-    text: "Relatórios",
-    link: "/relatorios",
+    text: "Requerimentos",
+    link: "/requerimentos",
     iconSvg: "assets/svgIcons/file-text.svg",
   ),
   MenuItem(

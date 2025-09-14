@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
-class RelatoriosView extends StatelessWidget {
-  const RelatoriosView({super.key});
+class RequerimentosView extends StatelessWidget {
+  const RequerimentosView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Estilos.appbar(context, 'Relatórios'),
+      appBar: Estilos.appbar(context, 'Requerimentos'),
       drawer: const NavigationDrawerWidget(),
       backgroundColor: Estilos.branco,
       body: ListView(
@@ -26,14 +26,14 @@ class RelatoriosView extends StatelessWidget {
                 height: 25,
               ),
               title: const Text(
-                'Inserir Novo Relatório',
+                'Cadastrar Requerimento',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text('Preencha e envie um novo relatório interno.'),
+              subtitle: const Text('Preencha e envie um novo requerimento interno.'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 // Navega para a rota filha de inserção
-                context.push('/relatorios/cadastro');
+                context.push('/requerimentos/cadastro');
               },
             ),
           ),
@@ -48,16 +48,16 @@ class RelatoriosView extends StatelessWidget {
                 height: 25,
               ),
               title: const Text(
-                'Meus Relatórios Enviados',
+                'Meus Requerimentos Enviados',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: const Text(
-                'Visualize o histórico dos seus relatórios.',
+                'Visualize o histórico dos seus requerimentos.',
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 // Navega para a rota filha de listagem
-                context.push('/relatorios/listar');
+                context.push('/requerimentos/listar');
               },
             ),
           ),
