@@ -1,29 +1,44 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:app_gcm_sa/models/requerimento_model.dart'; // Importa o novo modelo
+import 'package:app_gcm_sa/utils/configuracoes.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class RequerimentoService {
-  final String _baseUrl =
-      'https://apihomologacao.santoandre.sp.gov.br/bdgm/api/v1';
+  final String _baseUrl = Configuracoes.apiUrl;
 
   /// Insere um novo requerimento no sistema.
-  Future<void> inserirRequerimento(
-    Map<String, dynamic> payload,
-    String token,
-  ) async {
+  Future<void> inserirRequerimento({
+    required Map<String, String> fields,
+    required Uint8List assinaturaBytes,
+    required String token,
+  }) async {
     final url = Uri.parse('$_baseUrl/requerimento');
+    var request = http.MultipartRequest('POST', url);
 
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(payload),
+    // Adiciona os headers de autorização
+    request.headers['Authorization'] = 'Bearer $token';
+
+    // Adiciona os campos de texto do formulário
+    request.fields.addAll(fields);
+
+    // Adiciona o arquivo da assinatura
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'arq_assinatura',
+        assinaturaBytes,
+        filename: 'assinatura.png',
+        contentType: MediaType('image', 'png'),
+      ),
     );
 
-    // O status 204 (No Content) indica sucesso para esta requisição.
-    if (response.statusCode != 204) {
+    // Envia a requisição e aguarda a resposta
+    var streamedResponse = await request.send();
+
+    // Verifica o status da resposta
+    if (streamedResponse.statusCode != 204) {
+      final response = await http.Response.fromStream(streamedResponse);
       try {
         final responseBody = jsonDecode(response.body);
         throw Exception(
@@ -31,7 +46,7 @@ class RequerimentoService {
         );
       } catch (_) {
         throw Exception(
-          'Falha ao inserir o requerimento. Status: ${response.statusCode}',
+          'Falha ao inserir o requerimento. Status: ${streamedResponse.statusCode}',
         );
       }
     }
