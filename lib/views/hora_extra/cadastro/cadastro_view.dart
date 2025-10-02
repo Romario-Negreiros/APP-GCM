@@ -74,6 +74,8 @@ class CadastroData {
   String email;
   int? codTurno;
   String? turnoTrabalho;
+  String? dataAfastamento;
+  String? dataVencimentoCNH;
   String telefoneCelular;
   List<Disponibilidade> disponibilidades;
 
@@ -87,6 +89,8 @@ class CadastroData {
     required this.email,
     this.codTurno,
     this.turnoTrabalho,
+    this.dataAfastamento,
+    this.dataVencimentoCNH,
     required this.telefoneCelular,
     required this.disponibilidades,
   });
@@ -109,6 +113,8 @@ class CadastroData {
       email: json['email'] ?? '',
       codTurno: json['cod_turno'],
       turnoTrabalho: json["turno_trabalho"],
+      dataAfastamento: json["dta_afastamento"],
+      dataVencimentoCNH: json["dta_vencimento_cnh"],
       telefoneCelular: telefone,
       disponibilidades: disponibilidadeList,
     );
@@ -144,6 +150,8 @@ class _CadastroViewState extends State<CadastroView> {
   final _emailController = TextEditingController();
   final _telefoneCelularController = TextEditingController();
   final _disponibilidadeController = TextEditingController();
+  final _dataAfastamentoController = TextEditingController();
+  final _dataVencimentoCnhController = TextEditingController();
 
   @override
   void initState() {
@@ -195,6 +203,8 @@ class _CadastroViewState extends State<CadastroView> {
         _nomeGuerraController.text = data.nomeGuerra;
         _emailController.text = data.email;
         _telefoneCelularController.text = data.telefoneCelular;
+        _dataAfastamentoController.text = data.dataAfastamento ?? "Em atividade";
+        _dataVencimentoCnhController.text = data.dataVencimentoCNH ?? "Não informado";
 
         _categoriasCnhSelecionadas.clear();
         if (data.categoriaCnh.isNotEmpty) {
@@ -257,9 +267,6 @@ class _CadastroViewState extends State<CadastroView> {
         ).toIso8601String();
       }
 
-      final List<String> categoriasList = _categoriasCnhSelecionadas.toList();
-      categoriasList.sort();
-
       // Criando o mapa do payload
       final Map<String, dynamic> payload = {
         "cod_funcionario": int.tryParse(codFuncionario) ?? 0,
@@ -269,7 +276,6 @@ class _CadastroViewState extends State<CadastroView> {
         "email": _emailController.text,
         "ddd_telefone_celular": ddd,
         "num_telefone_celular": numero,
-        "categoria_cnh": categoriasList.join(''),
         "cod_turno": _turnoSelecionado?.codTurno,
         "disponibilidades":
             _cadastroData?.disponibilidades
@@ -307,45 +313,45 @@ class _CadastroViewState extends State<CadastroView> {
     }
   }
 
-  Widget _buildCnhCheckbox(String categoria) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(categoria),
-        Checkbox(
-          value: _categoriasCnhSelecionadas.contains(categoria),
-          onChanged: (bool? isChecked) {
-            final novoSet = Set<String>.from(_categoriasCnhSelecionadas);
-            if (isChecked == true) {
-              novoSet.add(categoria);
-            } else {
-              novoSet.remove(categoria);
-            }
+  // Widget _buildCnhCheckbox(String categoria) {
+  //   return Column(
+  //     mainAxisSize: MainAxisSize.min,
+  //     children: [
+  //       Text(categoria),
+  //       Checkbox(
+  //         value: _categoriasCnhSelecionadas.contains(categoria),
+  //         onChanged: (bool? isChecked) {
+  //           final novoSet = Set<String>.from(_categoriasCnhSelecionadas);
+  //           if (isChecked == true) {
+  //             novoSet.add(categoria);
+  //           } else {
+  //             novoSet.remove(categoria);
+  //           }
 
-            // APLICA A REGRA DE VALIDAÇÃO
-            // 1. Não pode ter mais de 2 categorias
-            // 2. Se tiver 2, uma delas OBRIGATORIAMENTE tem que ser a 'A'
-            if (novoSet.length > 2 ||
-                (novoSet.length == 2 && !novoSet.contains('A'))) {
-              // Se a regra for violada, mostra um erro e não atualiza o estado
-              showCustomSnackbar(
-                context,
-                message: 'Apenas "A" pode ser combinada com outra categoria.',
-                backgroundColor: Estilos.danger,
-              );
-              return; // Impede a atualização do estado
-            }
+  //           // APLICA A REGRA DE VALIDAÇÃO
+  //           // 1. Não pode ter mais de 2 categorias
+  //           // 2. Se tiver 2, uma delas OBRIGATORIAMENTE tem que ser a 'A'
+  //           if (novoSet.length > 2 ||
+  //               (novoSet.length == 2 && !novoSet.contains('A'))) {
+  //             // Se a regra for violada, mostra um erro e não atualiza o estado
+  //             showCustomSnackbar(
+  //               context,
+  //               message: 'Apenas "A" pode ser combinada com outra categoria.',
+  //               backgroundColor: Estilos.danger,
+  //             );
+  //             return; // Impede a atualização do estado
+  //           }
 
-            // Se a validação passar, atualiza o estado
-            setState(() {
-              _categoriasCnhSelecionadas.clear();
-              _categoriasCnhSelecionadas.addAll(novoSet);
-            });
-          },
-        ),
-      ],
-    );
-  }
+  //           // Se a validação passar, atualiza o estado
+  //           setState(() {
+  //             _categoriasCnhSelecionadas.clear();
+  //             _categoriasCnhSelecionadas.addAll(novoSet);
+  //           });
+  //         },
+  //       ),
+  //     ],
+  //   );
+  // }
 
   @override
   void dispose() {
@@ -527,36 +533,64 @@ class _CadastroViewState extends State<CadastroView> {
                               children: [
                                 Text(
                                   'Categoria CNH:',
-                                  style: Utils.safeGoogleFont(
-                                    'Roboto',
-                                    color: Colors.black54,
-                                  ),
+                                  style: Utils.safeGoogleFont('Roboto', color: Colors.black54),
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                    horizontal: 4,
-                                  ),
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Estilos.cinzaClaro,
-                                    ),
+                                    color: Colors.grey[200], // Fundo para indicar que é desabilitado
+                                    border: Border.all(color: Estilos.cinzaClaro),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    children: [
-                                      _buildCnhCheckbox('A'),
-                                      _buildCnhCheckbox('B'),
-                                      _buildCnhCheckbox('C'),
-                                      _buildCnhCheckbox('D'),
-                                      _buildCnhCheckbox('E'),
-                                    ],
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: categoriasValidas.map((categoria) {
+                                      final bool isSelected = _categoriasCnhSelecionadas.contains(categoria);
+                                      return Chip(
+                                        label: Text(
+                                          categoria,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: isSelected ? Colors.white : Colors.grey[600],
+                                          ),
+                                        ),
+                                        backgroundColor: isSelected ? Estilos.azulClaro : Colors.grey[300],
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
                                   ),
                                 ),
                               ],
+                            ),
+
+                            const SizedBox(height: 16),
+                            
+                            // --- NOVO CAMPO: VENCIMENTO DA CNH ---
+                            TextFormField(
+                              controller: _dataVencimentoCnhController,
+                              readOnly: true, // Apenas leitura
+                              decoration: const InputDecoration(
+                                labelText: 'Vencimento da CNH',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                                filled: true,
+                                fillColor: Color(0xFFf0f0f0), // Cor de fundo para indicar desabilitado
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            
+                            // --- NOVO CAMPO: DATA DE AFASTAMENTO ---
+                            TextFormField(
+                              controller: _dataAfastamentoController,
+                              readOnly: true, // Apenas leitura
+                              decoration: const InputDecoration(
+                                labelText: 'Data de Afastamento',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                                filled: true,
+                                fillColor: Color(0xFFf0f0f0), // Cor de fundo para indicar desabilitado
+                              ),
                             ),
 
                             const SizedBox(height: 16),
