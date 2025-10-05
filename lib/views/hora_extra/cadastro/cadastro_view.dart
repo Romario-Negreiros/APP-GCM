@@ -432,10 +432,13 @@ class _CadastroViewState extends State<CadastroView> {
                             TextFormField(
                               controller: _identificacaoFuncionalController,
                               keyboardType: TextInputType.number,
+                              readOnly: true,
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
                               ],
                               decoration: const InputDecoration(
+                                filled: true,
+                                fillColor: Color(0xFFf0f0f0), // Cor de fundo para indicar desabilitado
                                 border: OutlineInputBorder(
                                   borderSide: BorderSide(
                                     color: Estilos.cinzaClaro,
