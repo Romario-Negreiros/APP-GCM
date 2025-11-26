@@ -978,7 +978,7 @@ class _BoGcmEViewState extends State<BoGcmEView> {
                 GestureDetector(
                   onTap: () async {
                     final resultado = await context.push<Uint8List>(
-                      '/requerimento/assinatura',
+                      '/requerimentos/assinatura',
                     );
                     if (resultado != null) {
                       setState(() {
