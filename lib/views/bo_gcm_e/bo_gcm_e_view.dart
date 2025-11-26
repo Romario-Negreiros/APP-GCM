@@ -1,5 +1,3 @@
-import 'dart:typed_data'; // Import necessário para Uint8List
-
 import 'package:app_gcm_sa/components/card_nav_drawer_widget.dart';
 import 'package:app_gcm_sa/utils/estilos.dart';
 import 'package:app_gcm_sa/utils/utils.dart';
@@ -7,6 +5,7 @@ import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart'; // Import necessário para navegação
+import 'package:image_picker/image_picker.dart'; // Adicionado para fotos
 
 // --- MODELO DE DADOS PARA A PARTE ENVOLVIDA ---
 class ParteEnvolvida {
@@ -128,10 +127,13 @@ class _BoGcmEViewState extends State<BoGcmEView> {
   final _ufController = TextEditingController();
   final _nomeProprioPublicoController = TextEditingController();
 
+  final _relatorioOcorrenciaController = TextEditingController();
+
   String? _proprioMunicipal = 'Nao';
 
   // --- LISTA DE PARTES ENVOLVIDAS ---
   final List<ParteEnvolvida> _partesEnvolvidas = [];
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -176,6 +178,7 @@ class _BoGcmEViewState extends State<BoGcmEView> {
     _cidadeController.dispose();
     _ufController.dispose();
     _nomeProprioPublicoController.dispose();
+    _relatorioOcorrenciaController.dispose();
 
     for (var parte in _partesEnvolvidas) {
       parte.dispose();
@@ -461,6 +464,22 @@ class _BoGcmEViewState extends State<BoGcmEView> {
 
               const SizedBox(height: 32),
 
+              // --- SEÇÃO 3: RELATÓRIO DA OCORRÊNCIA ---
+              _buildSectionTitle('RELATÓRIO DA OCORRÊNCIA'),
+              const SizedBox(height: 16),
+              
+              TextFormField(
+                controller: _relatorioOcorrenciaController,
+                maxLines: 15, // Espaço grande para o texto
+                decoration: const InputDecoration(
+                  hintText: 'Descreva detalhadamente a ocorrência...',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true, // Alinha o label no topo
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
@@ -473,11 +492,6 @@ class _BoGcmEViewState extends State<BoGcmEView> {
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       // Lógica para salvar
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Dados validados. Pronto para salvar!'),
-                        ),
-                      );
                     }
                   },
                   child: const Text(
@@ -961,12 +975,10 @@ class _BoGcmEViewState extends State<BoGcmEView> {
                 ),
 
                 const SizedBox(height: 24),
-                // --- CAMPO DE ASSINATURA INTERATIVO ---
                 GestureDetector(
                   onTap: () async {
-                    // Reutilizando a rota de assinatura já existente no app
                     final resultado = await context.push<Uint8List>(
-                      '/requerimentos/assinatura',
+                      '/requerimento/assinatura',
                     );
                     if (resultado != null) {
                       setState(() {
@@ -1013,11 +1025,134 @@ class _BoGcmEViewState extends State<BoGcmEView> {
                             ),
                   ),
                 ),
+
+                const SizedBox(height: 24),
+                // --- SEÇÃO DE FOTOS DO CROQUI / AVARIAS (GRID 2x2) ---
+                const Text(
+                  'CROQUI / AVARIAS',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 colunas
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1, // Quadrado
+                  ),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return _buildPhotoSlot(parte, index);
+                  },
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // --- WIDGET DE SLOT PARA FOTO COM LÓGICA DE SELEÇÃO ---
+  Widget _buildPhotoSlot(ParteEnvolvida parte, int photoIndex) {
+    final photo = parte.fotosCroqui[photoIndex];
+
+    return GestureDetector(
+      onTap: () {
+        _selecionarOrigemImagem(parte, photoIndex);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[100],
+        ),
+        child:
+            photo != null
+                ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(photo, fit: BoxFit.cover),
+                )
+                : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.camera_alt, color: Colors.grey, size: 32),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Foto ${photoIndex + 1}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+      ),
+    );
+  }
+
+  // --- FUNÇÃO PARA SELECIONAR A ORIGEM DA IMAGEM ---
+  void _selecionarOrigemImagem(ParteEnvolvida parte, int index) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext ctx) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tirar Foto'),
+                onTap: () async {
+                  Navigator.of(ctx).pop(); // Fecha o menu
+                  try {
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 50, // Otimiza o tamanho
+                      maxWidth: 1024,
+                    );
+                    if (image != null) {
+                      final bytes = await image.readAsBytes();
+                      setState(() {
+                        parte.fotosCroqui[index] = bytes;
+                      });
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro ao abrir câmera: $e')),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Escolher da Galeria'),
+                onTap: () async {
+                  Navigator.of(ctx).pop(); // Fecha o menu
+                  try {
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 50,
+                      maxWidth: 1024,
+                    );
+                    if (image != null) {
+                      final bytes = await image.readAsBytes();
+                      setState(() {
+                        parte.fotosCroqui[index] = bytes;
+                      });
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro ao abrir galeria: $e')),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
