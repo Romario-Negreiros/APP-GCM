@@ -7,6 +7,27 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart'; // Import necessário para navegação
 import 'package:image_picker/image_picker.dart'; // Adicionado para fotos
 
+// --- MODELO DE DADOS PARA OBJETO APREENDIDO ---
+class ObjetoApreendido {
+  final descricaoController = TextEditingController();
+  final marcaController = TextEditingController();
+  final modeloController = TextEditingController();
+  final numeracaoController = TextEditingController();
+  final qtdController = TextEditingController();
+  final destinoController = TextEditingController();
+  final recebedorController = TextEditingController();
+
+  void dispose() {
+    descricaoController.dispose();
+    marcaController.dispose();
+    modeloController.dispose();
+    numeracaoController.dispose();
+    qtdController.dispose();
+    destinoController.dispose();
+    recebedorController.dispose();
+  }
+}
+
 // --- MODELO DE DADOS PARA A PARTE ENVOLVIDA ---
 class ParteEnvolvida {
   // Tipos de envolvimento
@@ -128,11 +149,16 @@ class _BoGcmEViewState extends State<BoGcmEView> {
   final _nomeProprioPublicoController = TextEditingController();
 
   final _relatorioOcorrenciaController = TextEditingController();
+  final _informacoesComplementaresController = TextEditingController();
 
   String? _proprioMunicipal = 'Nao';
 
   // --- LISTA DE PARTES ENVOLVIDAS ---
   final List<ParteEnvolvida> _partesEnvolvidas = [];
+
+  // --- LISTA DE OBJETOS APREENDIDOS ---
+  final List<ObjetoApreendido> _objetosApreendidos = [];
+
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -160,6 +186,20 @@ class _BoGcmEViewState extends State<BoGcmEView> {
     });
   }
 
+  void _adicionarObjeto() {
+    setState(() {
+      _objetosApreendidos.add(ObjetoApreendido());
+    });
+  }
+
+  void _removerObjeto(int index) {
+    setState(() {
+      _objetosApreendidos[index].dispose();
+      _objetosApreendidos.removeAt(index);
+    });
+  }
+
+
   @override
   void dispose() {
     _dataFatoController.dispose();
@@ -179,9 +219,13 @@ class _BoGcmEViewState extends State<BoGcmEView> {
     _ufController.dispose();
     _nomeProprioPublicoController.dispose();
     _relatorioOcorrenciaController.dispose();
+    _informacoesComplementaresController.dispose();
 
     for (var parte in _partesEnvolvidas) {
       parte.dispose();
+    }
+    for (var objeto in _objetosApreendidos) {
+      objeto.dispose();
     }
     super.dispose();
   }
@@ -462,12 +506,60 @@ class _BoGcmEViewState extends State<BoGcmEView> {
                 ),
               ),
 
+              // --- SEÇÃO 3: OBJETOS APREENDIDOS E INF. COMPLEMENTARES ---
+              _buildSectionTitle('OBJETOS APREENDIDOS'),
+              const SizedBox(height: 16),
+
+              if (_objetosApreendidos.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("Nenhum objeto apreendido adicionado."),
+                  ),
+                ),
+
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _objetosApreendidos.length,
+                itemBuilder: (context, index) {
+                  final objeto = _objetosApreendidos[index];
+                  return _buildObjetoForm(objeto, index, key: ObjectKey(objeto));
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              OutlinedButton.icon(
+                onPressed: _adicionarObjeto,
+                icon: const Icon(Icons.add_box),
+                label: const Text('Adicionar Objeto Apreendido'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Estilos.preto),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              
+              const Text('INFORMAÇÕES COMPLEMENTARES', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _informacoesComplementaresController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  hintText: 'Informações adicionais...',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+              ),
+
               const SizedBox(height: 32),
 
-              // --- SEÇÃO 3: RELATÓRIO DA OCORRÊNCIA ---
+              // --- SEÇÃO 4: RELATÓRIO DA OCORRÊNCIA ---
               _buildSectionTitle('RELATÓRIO DA OCORRÊNCIA'),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _relatorioOcorrenciaController,
                 maxLines: 15, // Espaço grande para o texto
@@ -521,6 +613,62 @@ class _BoGcmEViewState extends State<BoGcmEView> {
             color: Estilos.preto,
           ),
         ),
+      ),
+    );
+  }
+  // --- FORMULÁRIO DE OBJETO APREENDIDO ---
+  Widget _buildObjetoForm(ObjetoApreendido objeto, int index, {Key? key}) {
+    return Card(
+      key: key,
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        leading: IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          tooltip: 'Remover Objeto',
+          onPressed: () => _removerObjeto(index),
+        ),
+        title: AnimatedBuilder(
+          animation: objeto.descricaoController,
+          builder: (context, _) {
+            final desc = objeto.descricaoController.text;
+            return Text(
+              'Objeto #${index + 1} ${desc.isNotEmpty ? "- $desc" : ""}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            );
+          },
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextFormField(controller: objeto.descricaoController, decoration: const InputDecoration(labelText: 'Descrição', border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: TextFormField(controller: objeto.marcaController, decoration: const InputDecoration(labelText: 'Marca', border: OutlineInputBorder()))),
+                    const SizedBox(width: 12),
+                    Expanded(child: TextFormField(controller: objeto.modeloController, decoration: const InputDecoration(labelText: 'Modelo', border: OutlineInputBorder()))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(flex: 2, child: TextFormField(controller: objeto.numeracaoController, decoration: const InputDecoration(labelText: 'Numeração', border: OutlineInputBorder()))),
+                    const SizedBox(width: 12),
+                    Expanded(child: TextFormField(controller: objeto.qtdController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(labelText: 'Qtd.', border: OutlineInputBorder()))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(controller: objeto.destinoController, decoration: const InputDecoration(labelText: 'Destino', border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                TextFormField(controller: objeto.recebedorController, decoration: const InputDecoration(labelText: 'Recebedor', border: OutlineInputBorder())),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
