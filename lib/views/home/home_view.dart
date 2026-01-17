@@ -1,53 +1,14 @@
-import 'package:app_gcm_sa/components/btn_padrao_square.dart';
+import 'dart:async';
 import 'package:app_gcm_sa/components/card_nav_drawer_widget.dart';
+import 'package:app_gcm_sa/components/snackbar_widget.dart';
+import 'package:app_gcm_sa/models/ocorrencia_model.dart';
+import 'package:app_gcm_sa/services/ocorrencia_service.dart';
 import 'package:app_gcm_sa/services/session_manager.dart';
-import 'package:app_gcm_sa/utils/configuracoes.dart';
+import 'package:app_gcm_sa/services/signalr_location_service.dart';
 import 'package:app_gcm_sa/utils/estilos.dart';
-import 'package:app_gcm_sa/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-class MenuItem {
-  MenuItem({required this.text, required this.link, required this.iconSvg});
-
-  late String text;
-  late String link;
-  late String iconSvg;
-}
-
-List<MenuItem> menus = [
-  MenuItem(
-    text: "Hora Extra",
-    link: "/hora-extra",
-    iconSvg: "assets/svgIcons/lucide--calendar-days.svg",
-  ),
-  MenuItem(text: "CAP", link: "/cap", iconSvg: "assets/svgIcons/award.svg"),
-  MenuItem(
-    text: "Romaneio",
-    link: "/romaneio",
-    iconSvg: "assets/svgIcons/shirt.svg",
-  ),
-  MenuItem(
-    text: "Normativa",
-    link: "/normativa",
-    iconSvg: "assets/svgIcons/gavel.svg",
-  ),
-  MenuItem(
-    text: "Requerimentos",
-    link: "/requerimentos",
-    iconSvg: "assets/svgIcons/file-text.svg",
-  ),
-  MenuItem(
-    text: "BoGcm-E",
-    link: "/bo-gcm-e",
-    iconSvg: "assets/svgIcons/siren.svg",
-  ),
-  MenuItem(
-    text: "Estatística",
-    link: "/estatistica",
-    iconSvg: "assets/svgIcons/chart-bar.svg",
-  ),
-];
+import 'package:flutter_map/flutter_map.dart'; // Import do Flutter Map
+import 'package:latlong2/latlong.dart'; // Import para LatLng
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -57,115 +18,239 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-
+  // Controller do Flutter Map
+  final MapController _mapController = MapController();
+  
+  // Lista de marcadores do Flutter Map
+  List<Marker> _markers = [];
+  
+  final OcorrenciaService _apiService = OcorrenciaService();
+  final SignalRLocationService _socketService = SignalRLocationService();
   final SessionManager _sessionManager = SessionManager();
-  String _dscNomeFuncionario = "";
+
+  // Centro de Santo André
+  final LatLng _posicaoInicialSantoAndre = const LatLng(-23.6593, -46.5332);
 
   @override
   void initState() {
     super.initState();
-    _fetchDscNomeFuncionario();
+    _inicializarMapa();
   }
 
-  Future<void> _fetchDscNomeFuncionario() async {
-    final nome = await _sessionManager.getDscNomeFuncionario();
+  @override
+  void dispose() {
+    _socketService.stopConnection();
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _inicializarMapa() async {
+    final token = await _sessionManager.getToken();
+    if (token == null) return;
+
+    // 1. Carrega ocorrências do dia (histórico recente)
+    await _carregarOcorrenciasDoDia(token);
+
+    // 2. Conecta ao Websocket para receber novas em tempo real
+    _socketService.onLocationReceived = _onNovaOcorrenciaRecebida;
+    await _socketService.startConnection(token);
+  }
+
+  Future<void> _carregarOcorrenciasDoDia(String token) async {
+    try {
+      final response = await _apiService.pesquisarOcorrencias(
+        token: token,
+        indDtaHoje: 'S', // Filtro para trazer apenas as de hoje
+        pageSize: 100,
+      );
+
+      // Limpa e reconstrói a lista de marcadores
+      final novosMarcadores = response.items.map((oc) => _criarMarcador(oc)).toList();
+
+      setState(() {
+        _markers = novosMarcadores;
+      });
+    } catch (e) {
+      print('Erro ao carregar histórico: $e');
+    }
+  }
+
+  // Chamado quando o SignalR recebe um novo evento
+  void _onNovaOcorrenciaRecebida(Ocorrencia novaOcorrencia) {
+    if (!mounted) return;
+
     setState(() {
-      _dscNomeFuncionario = nome?.split(" ")[0] ?? "";
+      // Adiciona o novo marcador à lista
+      _markers.add(_criarMarcador(novaOcorrencia));
     });
+
+    // Feedback visual (SnackBar)
+    showCustomSnackbar(
+      context, 
+      message: 'NOVO SOS RECEBIDO!\nVítima: ${novaOcorrencia.vitima}',
+      backgroundColor: Colors.red,
+      duration: const Duration(seconds: 5),
+    );
+
+    // Move a câmera para a nova ocorrência com Zoom
+    _mapController.move(
+      LatLng(novaOcorrencia.latitude, novaOcorrencia.longitude), 
+      17.0 // Zoom level mais alto
+    );
+    
+    // Abre os detalhes automaticamente
+    _mostrarDetalhes(novaOcorrencia);
+  }
+
+  // Cria um marcador do Flutter Map
+  Marker _criarMarcador(Ocorrencia oc) {
+    return Marker(
+      point: LatLng(oc.latitude, oc.longitude),
+      width: 40,
+      height: 40,
+      child: GestureDetector(
+        onTap: () => _mostrarDetalhes(oc),
+        child: const Icon(
+          Icons.location_on, 
+          color: Colors.red, 
+          size: 40,
+          shadows: [
+            Shadow(blurRadius: 10, color: Colors.black45, offset: Offset(2, 2))
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- FUNÇÃO CORRIGIDA PARA EVITAR ESTOURO DE LAYOUT ---
+  void _mostrarDetalhes(Ocorrencia oc) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Permite que o modal ocupe mais espaço se necessário
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        // Adiciona padding para evitar sobreposição com barras de sistema
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom, 
+        ),
+        child: SingleChildScrollView( // Permite rolar o conteúdo se for muito grande
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 32),
+                    const SizedBox(width: 12),
+                    // Flexible evita que o título estoure horizontalmente
+                    const Flexible(
+                      child: Text(
+                        "ALERTA DE PÂNICO", 
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8), // Espaço antes do botão fechar
+                    IconButton(
+                      icon: const Icon(Icons.close), 
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
+                ),
+                const Divider(height: 30),
+                _infoRow("Vítima:", oc.vitima),
+                const SizedBox(height: 8),
+                _infoRow("Autor:", oc.autor),
+                const SizedBox(height: 8),
+                _infoRow("Endereço:", oc.endereco),
+                const SizedBox(height: 8),
+                _infoRow("Data/Hora:", oc.data),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.map),
+                    label: const Text("Abrir no Google Maps (Navegação)", style: TextStyle(fontSize: 16)),
+                    onPressed: () {
+                      // Aqui entraria a lógica do url_launcher para abrir rotas externas
+                      // Exemplo: google.navigation:q=latitude,longitude
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                // Adiciona um espaço extra no final para garantir que nada fique colado na borda
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    double ffem = Configuracoes.recuperarTamanho(context);
-
-    return Stack(
-      children: [
-        Scaffold(
-          appBar: Estilos.appBarHome(
-            context,
-            _dscNomeFuncionario,
-            scaffoldKey,
-            ffem,
-            "",
+    return Scaffold(
+      appBar: Estilos.appbar(context, 'Monitoramento SOS'),
+      drawer: const NavigationDrawerWidget(),
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: _posicaoInicialSantoAndre,
+          initialZoom: 13.0,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.all,
           ),
-          key: scaffoldKey,
-          drawer: NavigationDrawerWidget(),
-          backgroundColor: Estilos.branco,
-          body: Container(
-            color: Estilos.azulGradient4,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Estilos.branco,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Container(
-                    color: Colors.transparent,
-                    height: 160 * ffem,
-                    child: Center(
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        shrinkWrap: true,
-                        itemCount: menus.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              left:
-                                  index == 0
-                                      ? 16.0 * ffem
-                                      : 0, // Espaçamento à esquerda do primeiro item
-                              top: 8.0 * ffem, // Espaçamento superior
-                              bottom: 20.0 * ffem, // Espaçamento inferior
-                              right:
-                                  0.0, // Espaçamento direito entre itens (opcional)
-                            ),
-                            child: BtnPadraoSquare(
-                              onTap: () => context.push(menus[index].link),
-                              icon: menus[index].iconSvg,
-                              textBtn: menus[index].text,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      SizedBox(
-                        height: 145 * ffem,
-                        child: Image.asset('assets/imagens/GCM-Logo.png'),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Center(
-                          child: Text(
-                            'GCM-SA CONECTA',
-                            textAlign: TextAlign.center,
-                            style: Utils.safeGoogleFont(
-                              'Nunito',
-                              color: Colors.black,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              height: 0,
-                              letterSpacing: 0.88,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.gcm.app',
+          ),
+          
+          MarkerLayer(
+            markers: _markers,
+          ),
+
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FloatingActionButton(
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.my_location, color: Colors.black87),
+                onPressed: () {
+                  _mapController.move(_posicaoInicialSantoAndre, 13.0);
+                },
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
