@@ -113,269 +113,323 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // --- FUNÇÃO DO MODAL DE DETALHES COMPLETOS ---
+  // --- FUNÇÃO DO MODAL DE DETALHES ---
   void _mostrarDetalhes(Ocorrencia ocParcial) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor:
-          Colors
-              .transparent, // Fundo transparente para ver os cantos arredondados
+      backgroundColor: Colors.transparent,
+      // Usamos um widget Stateful separado para manter o estado do Future
+      // e evitar que o modal recarregue ao deslizar.
       builder:
-          (context) => Container(
-            height:
-                MediaQuery.of(context).size.height * 0.85, // Ocupa 85% da tela
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: FutureBuilder<Ocorrencia>(
-              // Busca os detalhes completos usando o UUID
-              future: _apiService.getDetalhesOcorrencia(
-                ocParcial.uuidOcorrencia ?? ocParcial.codigo,
-                _userToken!,
+          (context) => _DetalhesOcorrenciaModal(
+            ocParcial: ocParcial,
+            userToken: _userToken!,
+            apiService: _apiService,
+          ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: Estilos.appbar(context, 'Monitoramento SOS'),
+      drawer: const NavigationDrawerWidget(),
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: _posicaoInicialSantoAndre,
+          initialZoom: 13.0,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.all,
+          ),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.gcm.app',
+          ),
+          MarkerLayer(markers: _markers),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FloatingActionButton(
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.my_location, color: Colors.black87),
+                onPressed: () {
+                  _mapController.move(_posicaoInicialSantoAndre, 13.0);
+                },
               ),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Estilos.azulClaro),
-                  );
-                }
-
-                // Se falhar ou se não tiver UUID, usa os dados parciais que já temos
-                final oc = snapshot.data ?? ocParcial;
-
-                return Column(
-                  children: [
-                    // Barra de Título e Fechar
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Detalhes da Ocorrência",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-
-                    // Conteúdo Rolável
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Status e Badges
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        oc.atendido == 'S'
-                                            ? Colors.green
-                                            : Colors.red,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        oc.atendido == 'S'
-                                            ? Icons.check_circle
-                                            : Icons.warning,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        oc.atendido == 'S'
-                                            ? "ATENDIDO"
-                                            : "PENDENTE",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if (oc.indArmaFogo == 'S')
-                                  _buildRiskBadge(
-                                    "Arma de Fogo",
-                                    Colors.red.shade900,
-                                  ),
-                                if (oc.indPassagemCriminal == 'S')
-                                  _buildRiskBadge(
-                                    "Passagem Criminal",
-                                    Colors.orange.shade800,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Endereço
-                            _buildSectionHeader(Icons.map, "Localização"),
-                            Text(
-                              oc.endereco,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Data: ${DateFormat('dd/MM/yyyy', 'pt_BR').format(DateTime.parse(oc.data).toLocal())}",
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Veículo (Se houver)
-                            if (oc.veiculoModelo != null ||
-                                oc.veiculoPlaca != null) ...[
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.orange.shade200,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "VEÍCULO DO AUTOR",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.orange,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        _buildVeiculoInfo(
-                                          "Modelo",
-                                          oc.veiculoModelo ?? '-',
-                                        ),
-                                        _buildVeiculoInfo(
-                                          "Placa",
-                                          oc.veiculoPlaca ?? '-',
-                                        ),
-                                        _buildVeiculoInfo(
-                                          "Cor",
-                                          oc.veiculoCor ?? '-',
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                            ],
-
-                            // Cards de Vítima e Autor (Lado a Lado)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Vítima
-                                Expanded(
-                                  child: _buildProfileCard(
-                                    "VÍTIMA",
-                                    oc.vitima,
-                                    oc.codigoVitima.toString(),
-                                    Colors.pink.shade100,
-                                    Colors.pink.shade700,
-                                    _apiService.getFotoUrl(
-                                      'vitima',
-                                      oc.codigoVitima,
-                                    ),
-                                    _userToken!,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Autor
-                                Expanded(
-                                  child: _buildProfileCard(
-                                    "AUTOR",
-                                    oc.autor,
-                                    oc.codigoAutor.toString(),
-                                    Colors.grey.shade300,
-                                    Colors.black87,
-                                    _apiService.getFotoUrl(
-                                      'autor',
-                                      oc.codigoAutor,
-                                    ),
-                                    _userToken!,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 32),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Botões de Ação Fixos no Rodapé
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: const Offset(0, -2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              icon: const Icon(Icons.directions),
-                              label: const Text("Traçar Rota (Google Maps)"),
-                              onPressed: () {
-                                _abrirGoogleMaps(oc.latitude, oc.longitude);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// --- WIDGET SEPARADO PARA O MODAL (Corrige o bug de reload no scroll) ---
+class _DetalhesOcorrenciaModal extends StatefulWidget {
+  final Ocorrencia ocParcial;
+  final String userToken;
+  final OcorrenciaService apiService;
+
+  const _DetalhesOcorrenciaModal({
+    required this.ocParcial,
+    required this.userToken,
+    required this.apiService,
+  });
+
+  @override
+  State<_DetalhesOcorrenciaModal> createState() =>
+      _DetalhesOcorrenciaModalState();
+}
+
+class _DetalhesOcorrenciaModalState extends State<_DetalhesOcorrenciaModal> {
+  late Future<Ocorrencia> _detalhesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // O Future é criado apenas uma vez na inicialização do widget
+    _detalhesFuture = widget.apiService.getDetalhesOcorrencia(
+      widget.ocParcial.uuidOcorrencia ?? widget.ocParcial.codigo,
+      widget.userToken,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: FutureBuilder<Ocorrencia>(
+        future: _detalhesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Estilos.azulClaro),
+            );
+          }
+
+          final oc = snapshot.data ?? widget.ocParcial;
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Detalhes da Ocorrência",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  oc.atendido == 'S'
+                                      ? Colors.green
+                                      : Colors.red,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  oc.atendido == 'S'
+                                      ? Icons.check_circle
+                                      : Icons.warning,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  oc.atendido == 'S' ? "ATENDIDO" : "PENDENTE",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (oc.indArmaFogo == 'S')
+                            _buildRiskBadge(
+                              "Arma de Fogo",
+                              Colors.red.shade900,
+                            ),
+                          if (oc.indPassagemCriminal == 'S')
+                            _buildRiskBadge(
+                              "Passagem Criminal",
+                              Colors.orange.shade800,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildSectionHeader(Icons.map, "Localização"),
+                      Text(oc.endereco, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Data: ${DateFormat('dd/MM/yyyy', 'pt_BR').format(DateTime.parse(oc.data).toLocal())}",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
+                      const SizedBox(height: 24),
+
+                      if (oc.veiculoModelo != null ||
+                          oc.veiculoPlaca != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "VEÍCULO DO AUTOR",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _buildVeiculoInfo(
+                                    "Modelo",
+                                    oc.veiculoModelo ?? '-',
+                                  ),
+                                  _buildVeiculoInfo(
+                                    "Placa",
+                                    oc.veiculoPlaca ?? '-',
+                                  ),
+                                  _buildVeiculoInfo(
+                                    "Cor",
+                                    oc.veiculoCor ?? '-',
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildProfileCard(
+                              "VÍTIMA",
+                              oc.vitima,
+                              oc.codigoVitima.toString(),
+                              Colors.pink.shade100,
+                              Colors.pink.shade700,
+                              widget.apiService.getFotoUrl(
+                                'vitima',
+                                oc.codigoVitima,
+                              ),
+                              widget.userToken,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildProfileCard(
+                              "AUTOR",
+                              oc.autor,
+                              oc.codigoAutor.toString(),
+                              Colors.grey.shade300,
+                              Colors.black87,
+                              widget.apiService.getFotoUrl(
+                                'autor',
+                                oc.codigoAutor,
+                              ),
+                              widget.userToken,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.directions),
+                        label: const Text("Traçar Rota (Google Maps)"),
+                        onPressed: () {
+                          _abrirGoogleMaps(oc.latitude, oc.longitude);
+                        },
+                      ),
+                    ),
+                    // Botão "Ver Detalhes Completos" removido conforme solicitado
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -502,7 +556,6 @@ class _HomeViewState extends State<HomeView> {
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      // Fallback para navegador web se o app não estiver instalado
       final webUrl = Uri.parse(
         "https://www.google.com/maps/dir/?api=1&destination=$lat,$lng",
       );
@@ -510,43 +563,5 @@ class _HomeViewState extends State<HomeView> {
         await launchUrl(webUrl);
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: Estilos.appbar(context, 'Monitoramento SOS'),
-      drawer: const NavigationDrawerWidget(),
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: _posicaoInicialSantoAndre,
-          initialZoom: 13.0,
-          interactionOptions: const InteractionOptions(
-            flags: InteractiveFlag.all,
-          ),
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.gcm.app',
-          ),
-          MarkerLayer(markers: _markers),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: FloatingActionButton(
-                backgroundColor: Colors.white,
-                child: const Icon(Icons.my_location, color: Colors.black87),
-                onPressed: () {
-                  _mapController.move(_posicaoInicialSantoAndre, 13.0);
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
