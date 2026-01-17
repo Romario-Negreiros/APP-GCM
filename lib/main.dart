@@ -17,6 +17,9 @@ import 'package:app_gcm_sa/views/requerimento/cadastro/assinatura_requerimento_v
 import 'package:app_gcm_sa/views/bo_gcm_e/bo_gcm_e_view.dart';
 import 'package:app_gcm_sa/views/estatisticas/estatisticas_view.dart';
 import 'package:app_gcm_sa/views/hora_extra/hora_extra_view.dart';
+// import 'package:app_gcm_sa/views/sos/sos_hub_view.dart';
+// import 'package:app_gcm_sa/views/sos/listar_ocorrencias_view.dart';
+// import 'package:app_gcm_sa/views/sos/mapa_ocorrencias_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
@@ -88,6 +91,23 @@ final _router = GoRouter(
           name: 'home',
           builder: (context, state) => HomeView(),
         ),
+        // GoRoute(
+        //   path: '/sos',
+        //   name: 'sos',
+        //   builder: (context, state) => const SosHubView(),
+        //   routes: [
+        //     GoRoute(
+        //       path: 'listar',
+        //       name: 'sos-listar',
+        //       builder: (context, state) => const ListarOcorrenciasView(),
+        //     ),
+        //     GoRoute(
+        //       path: 'mapa',
+        //       name: 'sos-mapa',
+        //       builder: (context, state) => const MapaOcorrenciasView(),
+        //     ),
+        //   ],
+        // ),
         GoRoute(
           path: '/hora-extra',
           name: 'hora-extra',

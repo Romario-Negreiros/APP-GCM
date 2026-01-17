@@ -47,6 +47,10 @@ dependencies:
   signature: ^5.4.1
   http_parser: ^4.0.2
   image_picker: ^1.0.4
+  signalr_core: ^1.1.2
+  google_maps_flutter: ^2.4.6
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
 
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"

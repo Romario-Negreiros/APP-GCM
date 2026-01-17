@@ -136,6 +136,18 @@ class _NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
           isParent: false,
         ),
       },
+      // {
+      //   'name': 'SOS Mulher',
+      //   'item': buildMenuItem(
+      //     text: 'SOS Mulher',
+      //     iconSvg: 'assets/svgIcons/bell.svg',
+      //     onClicked: () {
+      //       Navigator.of(context).pop();
+      //       context.push("/sos");
+      //     },
+      //     isParent: false,
+      //   ),
+      // },
       {
         'name': 'Hora Extra',
         'item': buildMenuItem(
