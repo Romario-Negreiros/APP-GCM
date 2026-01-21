@@ -6,6 +6,7 @@ import 'package:app_gcm_sa/services/ocorrencia_service.dart';
 import 'package:app_gcm_sa/services/session_manager.dart';
 import 'package:app_gcm_sa/services/signalr_location_service.dart';
 import 'package:app_gcm_sa/utils/estilos.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
@@ -27,6 +28,8 @@ class _HomeViewState extends State<HomeView> {
   final SignalRLocationService _socketService = SignalRLocationService();
   final SessionManager _sessionManager = SessionManager();
 
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   final LatLng _posicaoInicialSantoAndre = const LatLng(-23.6593, -46.5332);
   String? _userToken;
 
@@ -40,6 +43,7 @@ class _HomeViewState extends State<HomeView> {
   void dispose() {
     _socketService.stopConnection();
     _mapController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -72,8 +76,14 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  void _onNovaOcorrenciaRecebida(Ocorrencia novaOcorrencia) {
+  void _onNovaOcorrenciaRecebida(Ocorrencia novaOcorrencia) async {
     if (!mounted) return;
+
+    try {
+      await _audioPlayer.play(AssetSource('sounds/sirene.mp3'));
+    } catch (e) {
+      print("Erro ao tocar som de sirene: $e");
+    }
 
     setState(() {
       _markers.add(_criarMarcador(novaOcorrencia));
