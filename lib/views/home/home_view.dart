@@ -227,6 +227,12 @@ class _DetalhesOcorrenciaModalState extends State<_DetalhesOcorrenciaModal> {
           }
 
           final oc = snapshot.data ?? widget.ocParcial;
+          String formattedDate;
+          try {
+            formattedDate = "Data: ${DateFormat('dd/MM/yyyy HH:mm', 'pt_BR').format(DateTime.parse(oc.data).toLocal())}";
+          } catch(e) {
+            formattedDate = "Data: ${oc.data}";
+          }
 
           return Column(
             children: [
@@ -310,7 +316,7 @@ class _DetalhesOcorrenciaModalState extends State<_DetalhesOcorrenciaModal> {
                       Text(oc.endereco, style: const TextStyle(fontSize: 16)),
                       const SizedBox(height: 8),
                       Text(
-                        "Data: ${DateFormat('dd/MM/yyyy HH:mm', 'pt_BR').format(DateTime.parse(oc.data).toLocal())}",
+                        formattedDate,
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const SizedBox(height: 24),
