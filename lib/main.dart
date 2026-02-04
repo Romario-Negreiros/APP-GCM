@@ -27,7 +27,7 @@ Future<void> main() async {
 
   const String environment = String.fromEnvironment(
     'ENV',
-    defaultValue: 'development',
+    defaultValue: 'production',
   );
 
   await dotenv.load(fileName: '.env.$environment');

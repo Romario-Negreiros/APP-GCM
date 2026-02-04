@@ -310,7 +310,7 @@ class _DetalhesOcorrenciaModalState extends State<_DetalhesOcorrenciaModal> {
                       Text(oc.endereco, style: const TextStyle(fontSize: 16)),
                       const SizedBox(height: 8),
                       Text(
-                        "Data: ${DateFormat('dd/MM/yyyy', 'pt_BR').format(DateTime.parse(oc.data).toLocal())}",
+                        "Data: ${DateFormat('dd/MM/yyyy HH:mm', 'pt_BR').format(DateTime.parse(oc.data).toLocal())}",
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const SizedBox(height: 24),

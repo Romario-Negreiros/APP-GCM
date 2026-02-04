@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:app_gcm_sa/models/ocorrencia_model.dart';
+import 'package:app_gcm_sa/utils/configuracoes.dart';
 import 'package:http/http.dart' as http;
 
 class OcorrenciaService {
-  final String _baseUrl = 'https://apihomologacao.santoandre.sp.gov.br/alertamulher/api/v1/ocorrencia';
+  final String _baseUrl = Configuracoes.apiAmUrl;
 
   Future<OcorrenciaResponse> pesquisarOcorrencias({
     required String token,
@@ -24,7 +25,7 @@ class OcorrenciaService {
     if (dscBusca != null && dscBusca.isNotEmpty) queryParams['dsc_busca'] = dscBusca;
     if (indDtaHoje != null) queryParams['ind_dta_hoje'] = indDtaHoje;
 
-    final uri = Uri.parse('$_baseUrl/pesquisar').replace(queryParameters: queryParams);
+    final uri = Uri.parse('$_baseUrl/ocorrencia/pesquisar').replace(queryParameters: queryParams);
 
     final response = await http.get(
       uri,
@@ -64,6 +65,6 @@ class OcorrenciaService {
   // URL para obter a imagem (não requer chamada, apenas formatação da URL)
   String getFotoUrl(String tipo, int id) {
     // Tipo: 'vitima' ou 'autor'
-    return 'https://apihomologacao.santoandre.sp.gov.br/alertamulher/api/v1/$tipo/arquivo/$id/foto_$tipo.jpg';
+    return '${Configuracoes.apiAmUrl}/$tipo/arquivo/$id/foto_$tipo.jpg';
   }
 }

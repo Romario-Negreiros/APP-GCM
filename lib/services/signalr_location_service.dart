@@ -1,11 +1,13 @@
 import 'package:app_gcm_sa/models/ocorrencia_model.dart';
+import 'package:app_gcm_sa/utils/configuracoes.dart';
 import 'package:signalr_core/signalr_core.dart';
 
 class SignalRLocationService {
   // ATENÇÃO: Ajuste a URL base para apontar para a raiz onde o /ws/location está hospedado
   // Se a API for a mesma do endpoint HTTP, a base seria algo como:
-  final String _hubUrl = 'https://apihomologacao.santoandre.sp.gov.br/alertamulher/ws/location'; 
-  
+final String _hubUrl =
+      '${Configuracoes.apiAmUrl.substring(0, Configuracoes.apiAmUrl.indexOf('/api/v1'))}/ws/location';  
+      
   HubConnection? _hubConnection;
   Function(Ocorrencia)? onLocationReceived;
 
