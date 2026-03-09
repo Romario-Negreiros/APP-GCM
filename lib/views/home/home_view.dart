@@ -80,7 +80,7 @@ class _HomeViewState extends State<HomeView> {
     if (!mounted) return;
 
     try {
-      await _audioPlayer.play(AssetSource('sounds/sirene.mp3'));
+      await _audioPlayer.play(AssetSource('sounds/sirene.ogg'));
     } catch (e) {
       print("Erro ao tocar som de sirene: $e");
     }
